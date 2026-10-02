@@ -11,7 +11,7 @@ export default function Reader(){
   const [doc,setDoc]=useState<any>(null); const [page,setPage]=useState(1); const [line,setLine]=useState(1); const [lines,setLines]=useState<Ln[]>([]);
   const [zoom,setZoom]=useState(1.3); const [msg,setMsg]=useState(""); const [err,setErr]=useState(""); const [notes,setNotes]=useState<Note[]>([]);
   useEffect(()=>{(async()=>{ try{
-    const pdfjs:any = await import("pdfjs-dist"); pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+    const pdfjs:any = await import("pdfjs-dist"); pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
     let blob = await getPdf(id); if(!blob){ blob = await downloadPdf(id); await savePdf(id, blob); }
     const d = await pdfjs.getDocument({ data: await blob.arrayBuffer() }).promise; setDoc(d);
     const p = await getProgress(id); if(p){ setPage(p.page); setLine(p.line); setMsg(`Continuar desde página ${p.page}, línea ${p.line}`); setTimeout(()=>setMsg(""),3500); }
