@@ -1,0 +1,4 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+body{background:#0b0b0d;color:#e7e7ea}
+.btn{@apply rounded-xl bg-card border border-line px-4 py-3 text-sm font-medium active:scale-95 transition}
+.btn-p{@apply rounded-xl bg-mor/90 text-black px-4 py-3 text-sm font-semibold active:scale-95}
