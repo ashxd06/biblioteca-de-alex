@@ -1,17 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { sb, login, watchToken } from "@/lib/supabase";
+import { login, watchToken, configured } from "@/lib/supabase";
 import { allProgress, allNotes, saveNote, delNote, pull, push, Progress, Note } from "@/lib/store";
 export default function Hub(){
   const [ps,setPs]=useState<Progress[]>([]); const [ns,setNs]=useState<Note[]>([]); const [t,setT]=useState(""); const [on,setOn]=useState(true);
   const load=async()=>{ setPs(await allProgress()); setNs((await allNotes()).filter(n=>!n.bookId)); };
-  useEffect(()=>{ watchToken(); pull().then(load); load(); setOn(navigator.onLine);
-    const f=()=>{setOn(navigator.onLine); if(navigator.onLine) push();}; addEventListener("online",f); addEventListener("offline",f); return()=>{removeEventListener("online",f);removeEventListener("offline",f)} },[]);
+  const [authError,setAuthError]=useState("");
+  useEffect(()=>{ const stop=watchToken(); pull().then(load); load(); setOn(navigator.onLine);
+    const f=()=>{setOn(navigator.onLine); if(navigator.onLine) push();}; addEventListener("online",f); addEventListener("offline",f); return()=>{stop();removeEventListener("online",f);removeEventListener("offline",f)} },[]);
   const last=ps[0];
   return <main className="space-y-6">
     <header className="flex items-center justify-between"><h1 className="text-2xl font-bold">📚 Biblioteca de <span className="text-mor">Alex</span></h1>
-      <button className="btn" onClick={()=>login()}>Entrar con Google</button></header>
+      <button className="btn" onClick={async()=>{setAuthError("");try{await login()}catch(e:any){setAuthError(e.message||"No se pudo abrir Google.")}}}>Entrar con Google</button></header>
+    {!configured&&<p className="rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-3 text-sm text-yellow-200">Falta terminar la conexión segura con Supabase y Google. Tus PDF siguen privados: la app no puede leer Drive hasta configurarla.</p>}
+    {authError&&<p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">{authError}</p>}
     {!on && <p className="text-sm text-yellow-300">Sin conexión: tu avance se sincronizará al volver internet.</p>}
     {last ? <Link href={`/read/${last.bookId}`} className="block rounded-2xl border border-ok/40 bg-ok/10 p-4">
       <p className="text-xs text-ok">Continuar leyendo</p>
