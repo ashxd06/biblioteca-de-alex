@@ -4,9 +4,11 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getPdf, savePdf, getProgress, saveProgress, saveNote, allNotes, Note } from "@/lib/store";
 import { downloadPdf } from "@/lib/drive";
+import EpubReader from "./epub-reader";
 type Ln = { text:string; x:number; y:number; w:number; h:number };
 export default function Reader(){
-  const id = useParams().id as string; const title = useSearchParams().get("t") || id;
+  const id = useParams().id as string; const params=useSearchParams(); const title = params.get("t") || id;
+  if(params.get("format")==="epub") return <EpubReader id={id} title={title}/>;
   const cv = useRef<HTMLCanvasElement>(null); const box = useRef<HTMLDivElement>(null);
   const utterance = useRef<SpeechSynthesisUtterance|null>(null);
   const [doc,setDoc]=useState<any>(null); const [page,setPage]=useState(1); const [line,setLine]=useState(1); const [lines,setLines]=useState<Ln[]>([]);
