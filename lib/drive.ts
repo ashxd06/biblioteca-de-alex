@@ -21,10 +21,10 @@ export async function listPdfs(input:string): Promise<DriveFile[]> {
     if(r.status===404) throw new Error("No encuentro este archivo en Drive. Comprueba el enlace y que tu cuenta de Google tenga acceso.");
     if(!r.ok) throw new Error("No se pudo leer este archivo de Drive.");
     const file = await r.json();
-    if(file.mimeType !== "application/pdf") throw new Error("El enlace no apunta a un PDF.");
+    if(file.mimeType !== "application/pdf" && file.mimeType !== "application/epub+zip") throw new Error("El enlace debe apuntar a un PDF o EPUB.");
     return [file];
   }
-  const q = encodeURIComponent(`'${target.id}' in parents and mimeType='application/pdf' and trashed=false`);
+  const q = encodeURIComponent(`'${target.id}' in parents and (mimeType='application/pdf' or mimeType='application/epub+zip') and trashed=false`);
   const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,size)&pageSize=200&orderBy=name`, { headers:await headers() });
   if(r.status===401||r.status===403) throw new Error("Drive no dio permiso o el acceso venció. Vuelve a entrar con Google y acepta el permiso de Drive.");
   if(!r.ok) throw new Error("No se pudo leer la carpeta de Drive.");
@@ -34,6 +34,5 @@ export async function downloadPdf(id:string): Promise<Blob> {
   const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers:await headers() });
   if(r.status===401||r.status===403) throw new Error("Drive no dio permiso o el acceso venció. Vuelve a entrar con Google y acepta el permiso de Drive.");
   if(!r.ok) throw new Error("No se pudo descargar el PDF de Drive.");
-  if(!r.headers.get("content-type")?.includes("pdf")) throw new Error("Drive no devolvió un PDF válido.");
   return r.blob();
 }
