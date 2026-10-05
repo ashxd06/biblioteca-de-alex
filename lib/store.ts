@@ -26,15 +26,5 @@ export async function pull(){
     if(!l || l.updated<t) await set("p:"+r.book_id,{bookId:r.book_id,title:r.title,page:r.page,line:r.line,total:r.total,updated:t}); }
   const { data: ns } = await sb.from("notes").select("*");
   for(const r of ns||[]) await set("n:"+r.id,{id:r.id,text:r.text,bookId:r.book_id,page:r.page,line:r.line,updated:Date.parse(r.updated_at)});
-  const LIBRARY_FOLDER_KEY = "library_folder";
-
-export function saveLibraryFolder(folder: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(LIBRARY_FOLDER_KEY, folder);
-}
-
-export function savedLibraryFolder(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(LIBRARY_FOLDER_KEY) ?? "";
 }
 }
