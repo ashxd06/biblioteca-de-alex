@@ -8,15 +8,17 @@ import EpubReader from "./epub-reader";
 type Ln = { text:string; x:number; y:number; w:number; h:number };
 export default function Reader(){
   const id = useParams().id as string; const params=useSearchParams(); const title = params.get("t") || id;
-  if(params.get("format")==="epub") return <EpubReader id={id} title={title}/>;
+  const from=params.get("from"); const back=from?`/library/${encodeURIComponent(from)}`:"/library";
+  if(params.get("format")==="epub") return <EpubReader id={id} title={title} back={back}/>;
   const cv = useRef<HTMLCanvasElement>(null); const box = useRef<HTMLDivElement>(null);
-  const utterance = useRef<SpeechSynthesisUtterance|null>(null);
+  const utterance = useRef<SpeechSynthesisUtterance|null>(null); const [asEpub,setAsEpub]=useState(false);
   const [doc,setDoc]=useState<any>(null); const [page,setPage]=useState(1); const [line,setLine]=useState(1); const [lines,setLines]=useState<Ln[]>([]);
   const [zoom,setZoom]=useState(1.3); const [msg,setMsg]=useState(""); const [err,setErr]=useState(""); const [notes,setNotes]=useState<Note[]>([]);
   const [voices,setVoices]=useState<SpeechSynthesisVoice[]>([]); const [voiceName,setVoiceName]=useState(""); const [rate,setRate]=useState(1); const [speaking,setSpeaking]=useState(false); const [paused,setPaused]=useState(false);
   useEffect(()=>{(async()=>{ try{
     const pdfjs:any = await import("pdfjs-dist"); pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
     let blob = await getPdf(id); if(!blob){ blob = await downloadPdf(id); await savePdf(id, blob); }
+    const head=new Uint8Array(await blob.slice(0,4).arrayBuffer()); if(head[0]===0x50&&head[1]===0x4b){ setAsEpub(true); return; } // un EPUB es un ZIP ("PK"): se abrió sin ?format=epub (p. ej. desde Inicio)
     const d = await pdfjs.getDocument({ data: await blob.arrayBuffer() }).promise; setDoc(d);
     const p = await getProgress(id); if(p){ setPage(p.page); setLine(p.line); setMsg(`Continuar desde página ${p.page}, línea ${p.line}`); setTimeout(()=>setMsg(""),3500); }
     setNotes((await allNotes()).filter(n=>n.bookId===id));
@@ -53,8 +55,9 @@ export default function Reader(){
   };
   const pauseOrResume=()=>{ if(!speaking) return; if(paused){ window.speechSynthesis.resume(); setPaused(false); } else { window.speechSynthesis.pause(); setPaused(true); } };
   const stopListening=()=>{ window.speechSynthesis.cancel(); setSpeaking(false); setPaused(false); };
-  if(err) return <p className="rounded-xl border border-red-500/40 p-3 text-red-300">{err} <Link href="/library" className="underline">Volver</Link></p>;
-  return <main className="space-y-3"><div className="flex items-center justify-between"><Link href="/library" className="text-sm text-mor">← Biblioteca</Link>
+  if(asEpub) return <EpubReader id={id} title={title} back={back}/>;
+  if(err) return <p className="rounded-xl border border-red-500/40 p-3 text-red-300">{err} <Link href={back} className="underline">Volver</Link></p>;
+  return <main className="space-y-3"><div className="flex items-center justify-between"><Link href={back} className="text-sm text-mor">{from?"← Novela":"← Biblioteca"}</Link>
     <span className="text-sm text-neutral-400">Pág. {page} / {doc?.numPages||"…"}</span></div>
     {msg&&<p className="rounded-xl bg-ok/15 p-2 text-center text-sm text-ok">{msg}</p>}
     {notes.filter(n=>n.page===page).map(n=><p key={n.id} className="rounded-xl bg-mor/15 p-2 text-sm">📝 Línea {n.line}: {n.text}</p>)}
